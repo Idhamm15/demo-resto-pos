@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NusantaraPOS & Queue System</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Font Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased h-screen flex overflow-hidden">
+
+    <!-- SIDEBAR NAVIGATION -->
+    <aside class="w-20 md:w-64 bg-emerald-950 text-emerald-100 flex flex-col justify-between transition-all duration-300 z-20 shadow-xl">
+        <div>
+            <!-- Brand Logo -->
+            <div class="h-20 flex items-center justify-center md:justify-start md:px-6 border-b border-emerald-900/60">
+                <div class="w-11 h-11 rounded-2xl bg-emerald-500 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-emerald-500/30">
+                    <i class="fa-solid fa-utensils"></i>
+                </div>
+                <div class="hidden md:block ml-3">
+                    <h1 class="font-bold text-white tracking-wide text-lg">Nusantara<span class="text-emerald-400">POS</span></h1>
+                    <p class="text-xs text-emerald-400/80">Resto & Queue System</p>
+                </div>
+            </div>
+
+            <!-- Menu Links -->
+            <nav class="p-3 space-y-1.5 mt-4">
+                <button onclick="switchTab('pos')" id="nav-pos" class="nav-btn w-full flex items-center justify-center md:justify-start px-4 py-3 rounded-xl bg-emerald-600 text-white font-medium transition-all shadow-md shadow-emerald-600/20">
+                    <i class="fa-solid fa-cash-register text-lg w-6"></i>
+                    <span class="hidden md:ml-3 md:block">Kasir (POS)</span>
+                </button>
+                <button onclick="switchTab('queue')" id="nav-queue" class="nav-btn w-full flex items-center justify-center md:justify-start px-4 py-3 rounded-xl hover:bg-emerald-900/70 text-emerald-300 hover:text-white font-medium transition-all">
+                    <i class="fa-solid fa-bell-concierge text-lg w-6"></i>
+                    <span class="hidden md:ml-3 md:block">Kelola Antrian</span>
+                    <span id="queue-badge" class="hidden md:ml-auto bg-amber-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">3</span>
+                </button>
+                <button onclick="switchTab('menu')" id="nav-menu" class="nav-btn w-full flex items-center justify-center md:justify-start px-4 py-3 rounded-xl hover:bg-emerald-900/70 text-emerald-300 hover:text-white font-medium transition-all">
+                    <i class="fa-solid fa-burger text-lg w-6"></i>
+                    <span class="hidden md:ml-3 md:block">Menu Makanan</span>
+                </button>
+                <button onclick="switchTab('reports')" id="nav-reports" class="nav-btn w-full flex items-center justify-center md:justify-start px-4 py-3 rounded-xl hover:bg-emerald-900/70 text-emerald-300 hover:text-white font-medium transition-all">
+                    <i class="fa-solid fa-chart-pie text-lg w-6"></i>
+                    <span class="hidden md:ml-3 md:block">Laporan Penjualan</span>
+                </button>
+                <button onclick="switchTab('settings')" id="nav-settings" class="nav-btn w-full flex items-center justify-center md:justify-start px-4 py-3 rounded-xl hover:bg-emerald-900/70 text-emerald-300 hover:text-white font-medium transition-all">
+                    <i class="fa-solid fa-gear text-lg w-6"></i>
+                    <span class="hidden md:ml-3 md:block">Pengaturan</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- User Profile Footer -->
+        <div class="p-4 border-t border-emerald-900/60 flex items-center justify-center md:justify-between bg-emerald-950/80">
+            <div class="flex items-center space-x-3">
+                <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&h=100&fit=crop&crop=faces" alt="Avatar" class="w-10 h-10 rounded-full object-cover border border-emerald-700">
+                <div class="hidden md:block">
+                    <h4 class="text-sm font-semibold text-white">Siti Kasir</h4>
+                    <p class="text-xs text-emerald-400 font-medium flex items-center"><span class="w-2 h-2 rounded-full bg-emerald-500 inline-block mr-1.5 animate-pulse"></span> Shift Aktif</p>
+                </div>
+            </div>
+            <button onclick="showToast('Sistem dikunci. Masukkan PIN kasir.', 'info')" class="hidden md:block text-emerald-400 hover:text-red-400 transition-colors p-2" title="Kunci Shift">
+                <i class="fa-solid fa-lock"></i>
+            </button>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT WRAPPER -->
+    <main class="flex-1 flex flex-col h-screen overflow-hidden">
+        
+        <!-- TOP HEADER BAR -->
+        <header class="h-20 bg-white border-b border-slate-200 px-6 flex items-center justify-between shrink-0 shadow-sm">
+            <div class="flex items-center space-x-4">
+                <div id="page-title" class="text-xl font-bold text-slate-800">Kasir Restoran (POS)</div>
+                <div class="hidden lg:flex items-center bg-emerald-50 border border-emerald-100 rounded-xl px-3 py-1.5 text-xs text-emerald-700 font-medium space-x-2">
+                    <i class="fa-regular fa-clock text-emerald-500"></i>
+                    <span id="live-clock">Senin, 9 Nov 2026 - 10:36 WIB</span>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <button onclick="switchTab('queue')" class="relative p-2.5 rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all">
+                    <i class="fa-solid fa-bell text-lg"></i>
+                    <span id="header-notif-dot" class="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-emerald-500 rounded-full ring-2 ring-white"></span>
+                </button>
+                <div class="h-6 w-px bg-slate-200"></div>
+                <div class="flex items-center space-x-2.5 bg-slate-100 px-3 py-1.5 rounded-xl">
+                    <i class="fa-solid fa-store text-emerald-600 text-sm"></i>
+                    <span class="text-xs font-semibold text-slate-700 hidden sm:inline">Cabang Utama Sudirman</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- DYNAMIC VIEWS CONTAINER -->
+        <div class="flex-1 overflow-hidden relative bg-slate-50">
+
+            <!-- ================= 1. VIEW: KASIR (POS) ================= -->
+            <div id="view-pos" class="absolute inset-0 flex flex-col md:flex-row overflow-hidden">
+                <!-- Left: Catalog & Categories -->
+                <div class="flex-1 flex flex-col h-full overflow-hidden p-6">
+                    <!-- Search & Filter bar -->
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 mb-5">
+                        <div class="relative w-full sm:w-80">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-slate-400"></i>
+                            <input type="text" id="pos-search" oninput="renderPosCatalog()" placeholder="Cari menu makanan atau minuman..." class="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-sm transition-all">
+                        </div>
+                        <!-- Categories pills -->
+                        <div class="flex items-center space-x-2 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0 no-scrollbar" id="pos-category-filters">
+                            <button onclick="setPosCategory('Semua')" id="pos-cat-Semua" class="pos-cat-btn px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-semibold shadow-sm transition-all shrink-0">Semua</button>
+                            <button onclick="setPosCategory('Makanan Utama')" id="pos-cat-Makanan Utama" class="pos-cat-btn px-4 py-2 rounded-xl bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 text-sm font-medium transition-all shrink-0">Makanan Utama</button>
+                            <button onclick="setPosCategory('Minuman')" id="pos-cat-Minuman" class="pos-cat-btn px-4 py-2 rounded-xl bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 text-sm font-medium transition-all shrink-0">Minuman</button>
+                            <button onclick="setPosCategory('Dessert')" id="pos-cat-Dessert" class="pos-cat-btn px-4 py-2 rounded-xl bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 text-sm font-medium transition-all shrink-0">Dessert</button>
+                            <button onclick="setPosCategory('Snack')" id="pos-cat-Snack" class="pos-cat-btn px-4 py-2 rounded-xl bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 text-sm font-medium transition-all shrink-0">Snack</button>
+                        </div>
+                    </div>
+
+                    <!-- Menu Grid Container -->
+                    <div id="pos-menu-grid" class="flex-1 overflow-y-auto grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 pr-2 pb-6">
+                        <!-- Generated by JS -->
+                    </div>
+                </div>
+
+                <!-- Right: Order Cart & Checkout -->
+                <div class="w-full md:w-96 bg-white border-l border-slate-200 flex flex-col h-full shadow-lg z-10">
+                    <!-- Order Header -->
+                    <div class="p-5 border-b border-slate-200 flex items-center justify-between">
+                        <div>
+                            <h2 class="font-bold text-slate-800 text-lg">Keranjang Pesanan</h2>
+                            <p class="text-xs text-slate-500">Antrian: <span id="current-queue-number" class="font-bold text-emerald-600">A-004</span></p>
+                        </div>
+                        <button onclick="clearCart()" class="text-xs text-red-500 hover:text-red-700 font-medium bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg transition-colors">
+                            <i class="fa-solid fa-trash-can mr-1"></i> Kosongkan
+                        </button>
+                    </div>
+
+                    <!-- Order Type Selector -->
+                    <div class="p-4 bg-slate-50 border-b border-slate-200">
+                        <div class="grid grid-cols-2 gap-2 p-1 bg-slate-200 rounded-xl">
+                            <button onclick="setOrderType('Dine In')" id="type-dinein" class="py-2 text-xs font-bold rounded-lg bg-white text-slate-800 shadow-sm transition-all flex items-center justify-center space-x-1.5">
+                                <i class="fa-solid fa-utensils"></i><span>Dine In</span>
+                            </button>
+                            <button onclick="setOrderType('Take Away')" id="type-takeaway" class="py-2 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition-all flex items-center justify-center space-x-1.5">
+                                <i class="fa-solid fa-bag-shopping"></i><span>Take Away</span>
+                            </button>
+                        </div>
+                        <div id="table-select-container" class="mt-3 flex items-center justify-between text-xs">
+                            <span class="text-slate-500 font-medium">Nomor Meja:</span>
+                            <select id="selected-table" class="bg-white border border-slate-200 rounded-lg px-3 py-1.5 font-semibold text-slate-800 focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                                <option value="Meja 01">Meja 01 (VIP)</option>
+                                <option value="Meja 02">Meja 02 (Outdoor)</option>
+                                <option value="Meja 03">Meja 03 (Indoor)</option>
+                                <option value="Meja 05">Meja 05 (Family)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Cart Items List -->
+                    <div id="cart-items-container" class="flex-1 overflow-y-auto p-4 space-y-3 divide-y divide-slate-100">
+                        <!-- Empty State -->
+                        <div id="cart-empty" class="h-full flex flex-col items-center justify-center text-center text-slate-400 py-12">
+                            <i class="fa-solid fa-basket-shopping text-4xl mb-3 text-slate-300"></i>
+                            <p class="text-sm font-medium">Keranjang masih kosong</p>
+                            <p class="text-xs text-slate-400 mt-1">Silakan pilih menu dari katalog</p>
+                        </div>
+                    </div>
+
+                    <!-- Checkout Calculation Footer -->
+                    <div class="p-5 border-t border-slate-200 bg-slate-50/50">
+                        <div class="space-y-1.5 text-xs text-slate-600 mb-4">
+                            <div class="flex justify-between">
+                                <span>Subtotal</span>
+                                <span id="cart-subtotal" class="font-medium text-slate-800">Rp 0</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Pajak Resto (10%)</span>
+                                <span id="cart-tax" class="font-medium text-slate-800">Rp 0</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Diskon Promo</span>
+                                <span id="cart-discount" class="font-medium text-emerald-600">-Rp 0</span>
+                            </div>
+                            <div class="flex justify-between text-sm font-bold text-slate-900 pt-2 border-t border-slate-200">
+                                <span>Total Pembayaran</span>
+                                <span id="cart-grandtotal" class="text-emerald-600 text-base">Rp 0</span>
+                            </div>
+                        </div>
+
+                        <!-- Payment Method Selection -->
+                        <div class="grid grid-cols-3 gap-2 mb-3">
+                            <button onclick="setPaymentMethod('Tunai')" id="pay-Tunai" class="pay-btn py-2 text-xs font-bold rounded-xl border border-emerald-500 bg-emerald-50 text-emerald-700 transition-all text-center">Tunai</button>
+                            <button onclick="setPaymentMethod('QRIS')" id="pay-QRIS" class="pay-btn py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 transition-all text-center">QRIS</button>
+                            <button onclick="setPaymentMethod('Kartu')" id="pay-Kartu" class="pay-btn py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 transition-all text-center">Kartu</button>
+                        </div>
+
+                        <!-- Checkout Action Buttons -->
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="processCheckout()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-emerald-600/20 transition-all flex items-center justify-center space-x-2">
+                                <i class="fa-solid fa-check"></i>
+                                <span>Proses Bayar</span>
+                            </button>
+                            <button onclick="printReceiptDirect()" class="w-full py-3 bg-white border border-slate-300 hover:bg-slate-100 text-slate-700 rounded-xl font-semibold text-sm transition-all flex items-center justify-center space-x-2">
+                                <i class="fa-solid fa-print"></i>
+                                <span>Cetak Struk</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= 2. VIEW: KELOLA ANTRIAN ================= -->
+            <div id="view-queue" class="absolute inset-0 hidden flex flex-col overflow-y-auto p-6">
+                <!-- Queue Header & Actions -->
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-800">Manajemen Antrian Pesanan</h2>
+                        <p class="text-sm text-slate-500">Monitor status pesanan dapur secara real-time dan kelola antrian pelanggan.</p>
+                    </div>
+                    <button onclick="createNewQueue()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold text-sm shadow-lg shadow-emerald-600/20 transition-all flex items-center space-x-2">
+                        <i class="fa-solid fa-user-plus"></i>
+                        <span>Ambil Antrian Baru (Walk-in)</span>
+                    </button>
+                </div>
+
+                <!-- Queue Status Columns / Board -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 pb-6">
+                    <!-- Column 1: Menunggu -->
+                    <div class="bg-slate-200/60 rounded-2xl p-4 flex flex-col h-[calc(100vh-230px)]">
+                        <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-300">
+                            <span class="font-bold text-slate-700 flex items-center">
+                                <span class="w-3 h-3 rounded-full bg-amber-500 inline-block mr-2"></span> Menunggu Dapur
+                            </span>
+                            <span id="count-menunggu" class="bg-white px-2.5 py-0.5 rounded-full text-xs font-bold text-slate-700 shadow-sm">0</span>
+                        </div>
+                        <div id="col-menunggu" class="flex-1 overflow-y-auto space-y-3 pr-1">
+                            <!-- Cards inserted by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Column 2: Sedang Disiapkan -->
+                    <div class="bg-slate-200/60 rounded-2xl p-4 flex flex-col h-[calc(100vh-230px)]">
+                        <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-300">
+                            <span class="font-bold text-slate-700 flex items-center">
+                                <span class="w-3 h-3 rounded-full bg-blue-500 inline-block mr-2"></span> Sedang Disiapkan
+                            </span>
+                            <span id="count-disiapkan" class="bg-white px-2.5 py-0.5 rounded-full text-xs font-bold text-slate-700 shadow-sm">0</span>
+                        </div>
+                        <div id="col-disiapkan" class="flex-1 overflow-y-auto space-y-3 pr-1">
+                            <!-- Cards inserted by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Column 3: Siap Disajikan -->
+                    <div class="bg-slate-200/60 rounded-2xl p-4 flex flex-col h-[calc(100vh-230px)]">
+                        <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-300">
+                            <span class="font-bold text-slate-700 flex items-center">
+                                <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block mr-2"></span> Siap Disajikan
+                            </span>
+                            <span id="count-siap" class="bg-white px-2.5 py-0.5 rounded-full text-xs font-bold text-slate-700 shadow-sm">0</span>
+                        </div>
+                        <div id="col-siap" class="flex-1 overflow-y-auto space-y-3 pr-1">
+                            <!-- Cards inserted by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Column 4: Selesai -->
+                    <div class="bg-slate-200/60 rounded-2xl p-4 flex flex-col h-[calc(100vh-230px)]">
+                        <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-300">
+                            <span class="font-bold text-slate-700 flex items-center">
+                                <span class="w-3 h-3 rounded-full bg-slate-500 inline-block mr-2"></span> Selesai
+                            </span>
+                            <span id="count-selesai" class="bg-white px-2.5 py-0.5 rounded-full text-xs font-bold text-slate-700 shadow-sm">0</span>
+                        </div>
+                        <div id="col-selesai" class="flex-1 overflow-y-auto space-y-3 pr-1">
+                            <!-- Cards inserted by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= 3. VIEW: MENU MAKANAN ================= -->
+            <div id="view-menu" class="absolute inset-0 hidden flex flex-col overflow-y-auto p-6">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-800">Manajemen Menu Makanan & Minuman</h2>
+                        <p class="text-sm text-slate-500">Tambah, ubah, atau atur ketersediaan menu resto Anda.</p>
+                    </div>
+                    <button onclick="openAddMenuModal()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold text-sm shadow-lg shadow-emerald-600/20 transition-all flex items-center space-x-2">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Tambah Menu Baru</span>
+                    </button>
+                </div>
+
+                <!-- Menu Table Card -->
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden mb-8">
+                    <div class="p-4 border-b border-slate-200 flex items-center justify-between">
+                        <div class="relative w-72">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-sm"></i>
+                            <input type="text" id="menu-table-search" oninput="renderMenuTable()" placeholder="Cari nama menu..." class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                        </div>
+                        <span id="total-menu-count" class="text-xs font-medium text-slate-500">Menampilkan seluruh menu</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider border-b border-slate-200 font-semibold">
+                                    <th class="py-3.5 px-6">Menu Item</th>
+                                    <th class="py-3.5 px-6">Kategori</th>
+                                    <th class="py-3.5 px-6">Harga (IDR)</th>
+                                    <th class="py-3.5 px-6">Status</th>
+                                    <th class="py-3.5 px-6 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="menu-table-body" class="divide-y divide-slate-100 text-sm">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= 4. VIEW: LAPORAN PENJUALAN ================= -->
+            <div id="view-reports" class="absolute inset-0 hidden flex flex-col overflow-y-auto p-6 space-y-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-800">Laporan & Analitik Penjualan</h2>
+                    <p class="text-sm text-slate-500">Ringkasan performa finansial dan transaksi restoran hari ini.</p>
+                </div>
+
+                <!-- Summary Metrics Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-4">
+                        <div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl font-bold">
+                            <i class="fa-solid fa-wallet"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium text-slate-500">Omzet Hari Ini</p>
+                            <h3 id="report-omzet" class="text-xl font-bold text-slate-800 mt-0.5">Rp 3.450.000</h3>
+                            <p class="text-[11px] text-emerald-600 font-semibold mt-1"><i class="fa-solid fa-arrow-up"></i> +12% dari kemarin</p>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-4">
+                        <div class="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-xl font-bold">
+                            <i class="fa-solid fa-receipt"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium text-slate-500">Total Transaksi</p>
+                            <h3 id="report-transactions" class="text-xl font-bold text-slate-800 mt-0.5">48 Pesanan</h3>
+                            <p class="text-[11px] text-blue-600 font-semibold mt-1">32 Dine-in | 16 Takeaway</p>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-4">
+                        <div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-xl font-bold">
+                            <i class="fa-solid fa-mug-hot"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium text-slate-500">Menu Terlaris</p>
+                            <h3 class="text-lg font-bold text-slate-800 mt-0.5">Nasi Goreng Spesial</h3>
+                            <p class="text-[11px] text-slate-500 mt-1">Terjual 24 porsi</p>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center space-x-4">
+                        <div class="w-12 h-12 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center text-xl font-bold">
+                            <i class="fa-solid fa-users"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-medium text-slate-500">Rata-rata Meja</p>
+                            <h3 class="text-xl font-bold text-slate-800 mt-0.5">3.2 Orang</h3>
+                            <p class="text-[11px] text-purple-600 font-semibold mt-1">Meja VIP Paling Sering</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visual Chart Simulation & Recent Transactions -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Chart Simulation -->
+                    <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="font-bold text-slate-800 text-base">Grafik Penjualan Per Jam (Hari Ini)</h3>
+                            <span class="text-xs bg-slate-100 text-slate-600 px-3 py-1 rounded-lg font-medium">Real-time update</span>
+                        </div>
+                        <!-- Simple visual CSS bar chart -->
+                        <div class="h-64 flex items-end justify-between gap-2 pt-6 px-2 border-b border-slate-100">
+                            <div class="flex-1 flex flex-col items-center gap-2">
+                                <span class="text-[10px] text-slate-500">10:00</span>
+                                <div class="w-full bg-emerald-500 rounded-t-lg hover:bg-emerald-600 transition-all" style="height: 35%;"></div>
+                                <span class="text-[10px] font-bold text-slate-700">350rb</span>
+                            </div>
+                            <div class="flex-1 flex flex-col items-center gap-2">
+                                <span class="text-[10px] text-slate-500">11:00</span>
+                                <div class="w-full bg-emerald-500 rounded-t-lg hover:bg-emerald-600 transition-all" style="height: 60%;"></div>
+                                <span class="text-[10px] font-bold text-slate-700">600rb</span>
+                            </div>
+                            <div class="flex-1 flex flex-col items-center gap-2">
+                                <span class="text-[10px] text-slate-500">12:00</span>
+                                <div class="w-full bg-emerald-600 rounded-t-lg hover:bg-emerald-700 transition-all" style="height: 95%;"></div>
+                                <span class="text-[10px] font-bold text-slate-700">1.2jt</span>
+                            </div>
+                            <div class="flex-1 flex flex-col items-center gap-2">
+                                <span class="text-[10px] text-slate-500">13:00</span>
+                                <div class="w-full bg-emerald-500 rounded-t-lg hover:bg-emerald-600 transition-all" style="height: 75%;"></div>
+                                <span class="text-[10px] font-bold text-slate-700">850rb</span>
+                            </div>
+                            <div class="flex-1 flex flex-col items-center gap-2">
+                                <span class="text-[10px] text-slate-500">14:00</span>
+                                <div class="w-full bg-emerald-400 rounded-t-lg hover:bg-emerald-500 transition-all" style="height: 40%;"></div>
+                                <span class="text-[10px] font-bold text-slate-700">450rb</span>
+                            </div>
+                            <div class="flex-1 flex flex-col items-center gap-2">
+                                <span class="text-[10px] text-slate-500">15:00</span>
+                                <div class="w-full bg-emerald-300 rounded-t-lg hover:bg-emerald-400 transition-all" style="height: 25%;"></div>
+                                <span class="text-[10px] font-bold text-slate-700">200rb</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-center space-x-6 mt-4 text-xs text-slate-500">
+                            <span class="flex items-center"><span class="w-3 h-3 bg-emerald-600 rounded-sm inline-block mr-1.5"></span> Jam Puncak (Lunch Time)</span>
+                            <span class="flex items-center"><span class="w-3 h-3 bg-emerald-400 rounded-sm inline-block mr-1.5"></span> Jam Normal</span>
+                        </div>
+                    </div>
+
+                    <!-- Payment Methods Breakdown -->
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-base mb-4">Metode Pembayaran</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <div class="flex justify-between text-xs font-semibold mb-1">
+                                        <span class="text-slate-700"><i class="fa-solid fa-money-bill-wave text-emerald-600 mr-2"></i> Tunai (Cash)</span>
+                                        <span class="text-slate-900">Rp 1.850.000 (54%)</span>
+                                    </div>
+                                    <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                                        <div class="bg-emerald-600 h-full rounded-full" style="width: 54%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-xs font-semibold mb-1">
+                                        <span class="text-slate-700"><i class="fa-solid fa-qrcode text-blue-600 mr-2"></i> QRIS</span>
+                                        <span class="text-slate-900">Rp 1.200.000 (35%)</span>
+                                    </div>
+                                    <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                                        <div class="bg-blue-600 h-full rounded-full" style="width: 35%"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex justify-between text-xs font-semibold mb-1">
+                                        <span class="text-slate-700"><i class="fa-solid fa-credit-card text-purple-600 mr-2"></i> Kartu Debit/Kredit</span>
+                                        <span class="text-slate-900">Rp 400.000 (11%)</span>
+                                    </div>
+                                    <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden">
+                                        <div class="bg-purple-600 h-full rounded-full" style="width: 11%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="pt-4 border-t border-slate-100 mt-6">
+                            <button onclick="showToast('Laporan berhasil diexport ke format Excel/PDF', 'success')" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-semibold text-xs transition-all flex items-center justify-center space-x-2">
+                                <i class="fa-solid fa-download"></i>
+                                <span>Export Laporan Lengkap</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= 5. VIEW: PENGATURAN ================= -->
+            <div id="view-settings" class="absolute inset-0 hidden flex flex-col overflow-y-auto p-6 max-w-4xl">
+                <h2 class="text-2xl font-bold text-slate-800 mb-1">Pengaturan Sistem Restoran</h2>
+                <p class="text-sm text-slate-500 mb-6">Konfigurasi printer kasir, pajak, dan profil outlet.</p>
+
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-6">
+                    <div>
+                        <h3 class="font-bold text-slate-800 text-md mb-3">Informasi Outlet</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">Nama Restoran</label>
+                                <input type="text" value="Nusantara Resto & Cafe" class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">Nomor Telepon</label>
+                                <input type="text" value="021-5558899" class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-xs font-medium text-slate-600 mb-1">Alamat Outlet</label>
+                                <input type="text" value="Jl. Jendral Sudirman No. 45, Jakarta Selatan" class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-200">
+                        <h3 class="font-bold text-slate-800 text-md mb-3">Pajak & Pembayaran</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">Tarif Pajak Restoran (%)</label>
+                                <input type="number" value="10" class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">Biaya Layanan (Service Charge %)</label>
+                                <input type="number" value="5" class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-1 focus:ring-emerald-500">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-200 flex justify-end">
+                        <button onclick="showToast('Pengaturan berhasil disimpan', 'success')" class="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold text-sm shadow-md transition-all">
+                            Simpan Perubahan
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- MODAL: TAMBAH / EDIT MENU -->
+    <div id="modal-menu" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden transform transition-all">
+            <div class="p-5 border-b border-slate-200 flex items-center justify-between">
+                <h3 id="modal-menu-title" class="font-bold text-slate-800 text-lg">Tambah Menu Baru</h3>
+                <button onclick="closeModalMenu()" class="text-slate-400 hover:text-slate-600 text-lg p-1"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <input type="hidden" id="edit-menu-id">
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Nama Menu</label>
+                    <input type="text" id="input-menu-name" placeholder="Contoh: Es Teh Manis" class="w-full p-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Kategori</label>
+                    <select id="input-menu-category" class="w-full p-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white">
+                        <option value="Makanan Utama">Makanan Utama</option>
+                        <option value="Minuman">Minuman</option>
+                        <option value="Dessert">Dessert</option>
+                        <option value="Snack">Snack</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Harga (Rp)</label>
+                    <input type="number" id="input-menu-price" placeholder="25000" class="w-full p-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">URL Gambar (Unsplash/Placeholder)</label>
+                    <input type="text" id="input-menu-image" placeholder="https://images.unsplash.com/..." class="w-full p-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
+                </div>
+            </div>
+            <div class="p-4 bg-slate-50 border-t border-slate-200 flex justify-end space-x-2">
+                <button onclick="closeModalMenu()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-sm font-semibold transition-all">Batal</button>
+                <button onclick="saveMenuData()" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-md transition-all">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toast-container" class="fixed bottom-6 right-6 z-50 space-y-2 pointer-events-none"></div>
+
+    <!-- JAVASCRIPT APPLICATION LOGIC -->
+    <script>
+        // --- APPLICATION STATE ---
+        let currentTab = 'pos';
+        let posCategory = 'Semua';
+        let orderType = 'Dine In';
+        let paymentMethod = 'Tunai';
+        let currentQueueIdCounter = 5;
+
+        // Mock Menu Database
+        let menuItems = [
+            { id: 1, name: 'Nasi Goreng Spesial', category: 'Makanan Utama', price: 35000, image: 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=300&h=200&fit=crop', status: 'Tersedia' },
+            { id: 2, name: 'Mie Goreng Seafood', category: 'Makanan Utama', price: 38000, image: 'https://images.unsplash.com/photo-1585032226651-759b368d7246?w=300&h=200&fit=crop', status: 'Tersedia' },
+            { id: 3, name: 'Sate Ayam Madura', category: 'Makanan Utama', price: 42000, image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=300&h=200&fit=crop', status: 'Tersedia' },
+            { id: 4, name: 'Ayam Penyet Sambal Ijo', category: 'Makanan Utama', price: 32000, image: 'https://images.unsplash.com/photo-1626509809490-550ba02f8352?w=300&h=200&fit=crop', status: 'Tersedia' },
+            { id: 5, name: 'Es Teh Manis', category: 'Minuman', price: 6000, image: 'https://images.unsplash.com/photo-1556679343-c7306c1976bc?w=300&h=200&fit=crop', status: 'Tersedia' },
+            { id: 6, name: 'Es Jeruk Segar', category: 'Minuman', price: 9000, image: 'https://images.unsplash.com/photo-1613478223719-2ab802602423?w=300&h=200&fit=crop', status: 'Tersedia' },
+            { id: 7, name: 'Jus Alpukat', category: 'Minuman', price: 18000, image: 'https://images.unsplash.com/photo-1525385133512-2f3bdd039a54?w=300&h=200&fit=crop', status: 'Tersedia' },
+            { id: 8, name: 'Es Campur Nusantara', category: 'Dessert', price: 22000, image: 'https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=300&h=200&fit=crop', status: 'Tersedia' },
+            { id: 9, name: 'Pisang Goreng Keju', category: 'Snack', price: 15000, image: 'https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=300&h=200&fit=crop', status: 'Tersedia' },
+            { id: 10, name: 'Tahu Crispy Balado', category: 'Snack', price: 14000, image: 'https://images.unsplash.com/photo-1541529086526-db283c563270?w=300&h=200&fit=crop', status: 'Tersedia' }
+        ];
+
+        // Current Active Cart
+        let cart = [];
+
+        // Live Queue State
+        let queueList = [
+            { id: 'A-001', customer: 'Budi Santoso', type: 'Dine In', table: 'Meja 01', items: '2x Nasi Goreng, 2x Es Teh', status: 'Menunggu', time: '10:15' },
+            { id: 'A-002', customer: 'Siti Rahma', type: 'Take Away', table: '-', items: '1x Sate Ayam, 1x Es Jeruk', status: 'Sedang Disiapkan', time: '10:22' },
+            { id: 'A-003', customer: 'Andi Pratama', type: 'Dine In', table: 'Meja 03', items: '1x Ayam Penyet, 1x Jus Alpukat', status: 'Siap Disajikan', time: '10:28' }
+        ];
+
+        // --- NAVIGATION & TABS ---
+        function switchTab(tabId) {
+            currentTab = tabId;
+            const views = ['pos', 'queue', 'menu', 'reports', 'settings'];
+            
+            views.forEach(v => {
+                const el = document.getElementById(`view-${v}`);
+                const nav = document.getElementById(`nav-${v}`);
+                if (el && nav) {
+                    if (v === tabId) {
+                        el.classList.remove('hidden');
+                        nav.className = "nav-btn w-full flex items-center justify-center md:justify-start px-4 py-3 rounded-xl bg-emerald-600 text-white font-medium transition-all shadow-md shadow-emerald-600/20";
+                    } else {
+                        el.classList.add('hidden');
+                        nav.className = "nav-btn w-full flex items-center justify-center md:justify-start px-4 py-3 rounded-xl hover:bg-emerald-900/70 text-emerald-300 hover:text-white font-medium transition-all";
+                    }
+                }
+            });
+
+            // Update Header Title
+            const titles = {
+                pos: 'Kasir Restoran (POS)',
+                queue: 'Kelola Antrian Pesanan',
+                menu: 'Manajemen Menu Makanan',
+                reports: 'Laporan Penjualan & Analitik',
+                settings: 'Pengaturan Sistem'
+            };
+            document.getElementById('page-title').innerText = titles[tabId];
+
+            if (tabId === 'pos') renderPosCatalog();
+            if (tabId === 'menu') renderMenuTable();
+            if (tabId === 'queue') renderQueueBoard();
+        }
+
+        // --- POS CATALOG & CART FUNCTIONS ---
+        function setPosCategory(cat) {
+            posCategory = cat;
+            document.querySelectorAll('.pos-cat-btn').forEach(btn => {
+                btn.className = "pos-cat-btn px-4 py-2 rounded-xl bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 text-sm font-medium transition-all shrink-0";
+            });
+            const activeBtn = document.getElementById(`pos-cat-${cat}`);
+            if (activeBtn) {
+                activeBtn.className = "pos-cat-btn px-4 py-2 rounded-xl bg-emerald-600 text-white text-sm font-semibold shadow-sm transition-all shrink-0";
+            }
+            renderPosCatalog();
+        }
+
+        function renderPosCatalog() {
+            const grid = document.getElementById('pos-menu-grid');
+            const search = document.getElementById('pos-search').value.toLowerCase();
+            
+            const filtered = menuItems.filter(item => {
+                const matchCat = posCategory === 'Semua' || item.category === posCategory;
+                const matchName = item.name.toLowerCase().includes(search);
+                return matchCat && matchName && item.status === 'Tersedia';
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-12 text-center text-slate-400">Menu tidak ditemukan</div>`;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(item => `
+                <div onclick="addToCart(${item.id})" class="bg-white rounded-2xl border border-slate-200/80 overflow-hidden shadow-sm hover:shadow-md hover:border-emerald-500/50 cursor-pointer transition-all flex flex-col justify-between group">
+                    <div class="h-32 w-full overflow-hidden relative bg-slate-100">
+                        <img src="${item.image}" alt="${item.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onerror="this.src='https://placehold.co/300x200/e2e8f0/64748b?text=Resto+Menu'">
+                        <span class="absolute top-2 right-2 bg-slate-900/70 backdrop-blur-md text-white text-[10px] font-semibold px-2 py-0.5 rounded-md">${item.category}</span>
+                    </div>
+                    <div class="p-3.5 flex flex-col justify-between flex-1">
+                        <h4 class="font-semibold text-slate-800 text-sm line-clamp-1 group-hover:text-emerald-600 transition-colors">${item.name}</h4>
+                        <div class="flex items-center justify-between mt-3">
+                            <span class="font-bold text-emerald-600 text-sm">Rp ${item.price.toLocaleString('id-ID')}</span>
+                            <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition-all shadow-sm">
+                                <i class="fa-solid fa-plus text-xs"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function setOrderType(type) {
+            orderType = type;
+            const dineInBtn = document.getElementById('type-dinein');
+            const takeAwayBtn = document.getElementById('type-takeaway');
+            const tableContainer = document.getElementById('table-select-container');
+
+            if (type === 'Dine In') {
+                dineInBtn.className = "py-2 text-xs font-bold rounded-lg bg-white text-slate-800 shadow-sm transition-all flex items-center justify-center space-x-1.5";
+                takeAwayBtn.className = "py-2 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition-all flex items-center justify-center space-x-1.5";
+                tableContainer.classList.remove('hidden');
+            } else {
+                takeAwayBtn.className = "py-2 text-xs font-bold rounded-lg bg-white text-slate-800 shadow-sm transition-all flex items-center justify-center space-x-1.5";
+                dineInBtn.className = "py-2 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition-all flex items-center justify-center space-x-1.5";
+                tableContainer.classList.add('hidden');
+            }
+        }
+
+        function setPaymentMethod(method) {
+            paymentMethod = method;
+            document.querySelectorAll('.pay-btn').forEach(btn => {
+                btn.className = "pay-btn py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 transition-all text-center";
+            });
+            const activePay = document.getElementById(`pay-${method}`);
+            if (activePay) {
+                activePay.className = "pay-btn py-2 text-xs font-bold rounded-xl border border-emerald-500 bg-emerald-50 text-emerald-700 transition-all text-center";
+            }
+        }
+
+        function addToCart(itemId) {
+            const item = menuItems.find(m => m.id === itemId);
+            if (!item) return;
+
+            const existing = cart.find(c => c.id === itemId);
+            if (existing) {
+                existing.qty += 1;
+            } else {
+                cart.push({ ...item, qty: 1 });
+            }
+            renderCart();
+        }
+
+        function updateCartQty(itemId, change) {
+            const index = cart.findIndex(c => c.id === itemId);
+            if (index !== -1) {
+                cart[index].qty += change;
+                if (cart[index].qty <= 0) {
+                    cart.splice(index, 1);
+                }
+            }
+            renderCart();
+        }
+
+        function clearCart() {
+            cart = [];
+            renderCart();
+        }
+
+        function renderCart() {
+            const container = document.getElementById('cart-items-container');
+            
+            if (cart.length === 0) {
+                container.innerHTML = `
+                    <div id="cart-empty" class="h-full flex flex-col items-center justify-center text-center text-slate-400 py-12">
+                        <i class="fa-solid fa-basket-shopping text-4xl mb-3 text-slate-300"></i>
+                        <p class="text-sm font-medium">Keranjang masih kosong</p>
+                        <p class="text-xs text-slate-400 mt-1">Silakan pilih menu dari katalog</p>
+                    </div>
+                `;
+                document.getElementById('cart-subtotal').innerText = 'Rp 0';
+                document.getElementById('cart-tax').innerText = 'Rp 0';
+                document.getElementById('cart-discount').innerText = '-Rp 0';
+                document.getElementById('cart-grandtotal').innerText = 'Rp 0';
+                return;
+            }
+
+            container.innerHTML = cart.map(item => `
+                <div class="flex items-center justify-between py-2.5">
+                    <div class="flex-1 pr-3">
+                        <h5 class="text-xs font-bold text-slate-800">${item.name}</h5>
+                        <p class="text-xs text-emerald-600 font-medium">Rp ${(item.price * item.qty).toLocaleString('id-ID')}</p>
+                    </div>
+                    <div class="flex items-center space-x-2 bg-slate-100 rounded-lg p-1">
+                        <button onclick="updateCartQty(${item.id}, -1)" class="w-6 h-6 rounded-md bg-white text-slate-700 shadow-sm flex items-center justify-center hover:bg-slate-200 text-xs font-bold">-</button>
+                        <span class="text-xs font-bold px-1.5 text-slate-800">${item.qty}</span>
+                        <button onclick="updateCartQty(${item.id}, 1)" class="w-6 h-6 rounded-md bg-emerald-600 text-white shadow-sm flex items-center justify-center hover:bg-emerald-700 text-xs font-bold">+</button>
+                    </div>
+                </div>
+            `).join('');
+
+            // Calculate totals
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            const tax = Math.round(subtotal * 0.1);
+            const discount = subtotal > 100000 ? 5000 : 0; // Promo discount over 100k
+            const grandTotal = subtotal + tax - discount;
+
+            document.getElementById('cart-subtotal').innerText = `Rp ${subtotal.toLocaleString('id-ID')}`;
+            document.getElementById('cart-tax').innerText = `Rp ${tax.toLocaleString('id-ID')}`;
+            document.getElementById('cart-discount').innerText = `-Rp ${discount.toLocaleString('id-ID')}`;
+            document.getElementById('cart-grandtotal').innerText = `Rp ${grandTotal.toLocaleString('id-ID')}`;
+        }
+
+        function processCheckout() {
+            if (cart.length === 0) {
+                showToast('Keranjang masih kosong!', 'error');
+                return;
+            }
+
+            const queueId = `A-00${currentQueueIdCounter++}`;
+            const tableName = orderType === 'Dine In' ? document.getElementById('selected-table').value : 'Takeaway';
+            const itemsSummary = cart.map(c => `${c.qty}x ${c.name}`).join(', ');
+            
+            // Add to live queue
+            queueList.unshift({
+                id: queueId,
+                customer: 'Pelanggan Walk-in',
+                type: orderType,
+                table: tableName,
+                items: itemsSummary,
+                status: 'Menunggu',
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            });
+
+            showToast(`Pembayaran berhasil! Antrian ${queueId} dicetak.`, 'success');
+            clearCart();
+            updateQueueBadge();
+            renderQueueBoard();
+        }
+
+        function printReceiptDirect() {
+            if (cart.length === 0) {
+                showToast('Tidak ada pesanan untuk dicetak', 'error');
+                return;
+            }
+            showToast('Struk pesanan berhasil dikirim ke thermal printer kasir', 'success');
+        }
+
+        // --- QUEUE MANAGEMENT FUNCTIONS ---
+        function createNewQueue() {
+            const queueId = `A-00${currentQueueIdCounter++}`;
+            queueList.unshift({
+                id: queueId,
+                customer: 'Pelanggan Walk-in',
+                type: 'Dine In',
+                table: 'Meja 01',
+                items: '1x Nasi Goreng Spesial, 1x Es Teh',
+                status: 'Menunggu',
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            });
+            updateQueueBadge();
+            renderQueueBoard();
+            showToast(`Tiket antrian baru ${queueId} berhasil dibuat`, 'success');
+        }
+
+        function updateQueueStatus(queueId, newStatus) {
+            const q = queueList.find(item => item.id === queueId);
+            if (q) {
+                q.status = newStatus;
+                renderQueueBoard();
+                updateQueueBadge();
+                showToast(`Antrian ${queueId} dipindah ke status: ${newStatus}`, 'info');
+            }
+        }
+
+        function updateQueueBadge() {
+            const waitingCount = queueList.filter(q => q.status === 'Menunggu' || q.status === 'Sedang Disiapkan' || q.status === 'Siap Disajikan').length;
+            const badge = document.getElementById('queue-badge');
+            if (waitingCount > 0) {
+                badge.innerText = waitingCount;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        function renderQueueBoard() {
+            const statuses = ['Menunggu', 'Sedang Disiapkan', 'Siap Disajikan', 'Selesai'];
+            
+            statuses.forEach(status => {
+                const colKey = {
+                    'Menunggu': 'menunggu',
+                    'Sedang Disiapkan': 'disiapkan',
+                    'Siap Disajikan': 'siap',
+                    'Selesai': 'selesai'
+                }[status];
+
+                const container = document.getElementById(`col-${colKey}`);
+                const countBadge = document.getElementById(`count-${colKey}`);
+                
+                const filtered = queueList.filter(q => q.status === status);
+                countBadge.innerText = filtered.length;
+
+                if (filtered.length === 0) {
+                    container.innerHTML = `<div class="text-xs text-slate-400 text-center py-6">Tidak ada antrian</div>`;
+                    return;
+                }
+
+                container.innerHTML = filtered.map(q => {
+                    let nextActionBtn = '';
+                    if (status === 'Menunggu') {
+                        nextActionBtn = `<button onclick="updateQueueStatus('${q.id}', 'Sedang Disiapkan')" class="w-full py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold transition-all">Mulai Siapkan <i class="fa-solid fa-arrow-right ml-1"></i></button>`;
+                    } else if (status === 'Sedang Disiapkan') {
+                        nextActionBtn = `<button onclick="updateQueueStatus('${q.id}', 'Siap Disajikan')" class="w-full py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold transition-all">Siap Disaji <i class="fa-solid fa-arrow-right ml-1"></i></button>`;
+                    } else if (status === 'Siap Disajikan') {
+                        nextActionBtn = `<button onclick="updateQueueStatus('${q.id}', 'Selesai')" class="w-full py-1.5 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-semibold transition-all">Selesai <i class="fa-solid fa-check ml-1"></i></button>`;
+                    } else {
+                        nextActionBtn = `<span class="text-[11px] text-emerald-600 font-semibold flex items-center justify-center"><i class="fa-solid fa-circle-check mr-1"></i> Selesai disajikan</span>`;
+                    }
+
+                    return `
+                        <div class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-sm space-y-2.5">
+                            <div class="flex items-center justify-between">
+                                <span class="px-2.5 py-1 bg-emerald-50 text-emerald-700 font-extrabold text-xs rounded-lg">${q.id}</span>
+                                <span class="text-[11px] text-slate-400 font-medium"><i class="fa-regular fa-clock"></i> ${q.time}</span>
+                            </div>
+                            <div>
+                                <div class="flex items-center justify-between text-xs font-bold text-slate-800">
+                                    <span>${q.customer}</span>
+                                    <span class="text-slate-500 font-normal">${q.type === 'Dine In' ? q.table : 'Take Away'}</span>
+                                </div>
+                                <p class="text-xs text-slate-500 mt-1 line-clamp-2">${q.items}</p>
+                            </div>
+                            <div class="pt-2 border-t border-slate-100">
+                                ${nextActionBtn}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            });
+        }
+
+        // --- MENU MANAGEMENT TABLE FUNCTIONS ---
+        function renderMenuTable() {
+            const tbody = document.getElementById('menu-table-body');
+            const search = document.getElementById('menu-table-search').value.toLowerCase();
+            
+            const filtered = menuItems.filter(m => m.name.toLowerCase().includes(search));
+
+            tbody.innerHTML = filtered.map(item => `
+                <tr class="hover:bg-slate-50/60 transition-colors">
+                    <td class="py-3.5 px-6 flex items-center space-x-3">
+                        <img src="${item.image}" alt="" class="w-10 h-10 rounded-xl object-cover border border-slate-200" onerror="this.src='https://placehold.co/100x100/e2e8f0/64748b?text=Menu'">
+                        <div>
+                            <p class="font-bold text-slate-800">${item.name}</p>
+                            <span class="text-xs text-slate-400">ID: #MNU-${item.id}</span>
+                        </div>
+                    </td>
+                    <td class="py-3.5 px-6 font-medium text-slate-600">${item.category}</td>
+                    <td class="py-3.5 px-6 font-semibold text-emerald-600">Rp ${item.price.toLocaleString('id-ID')}</td>
+                    <td class="py-3.5 px-6">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${item.status === 'Tersedia' ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}">${item.status}</span>
+                    </td>
+                    <td class="py-3.5 px-6 text-center space-x-2">
+                        <button onclick="openEditMenuModal(${item.id})" class="p-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs transition-all" title="Edit Menu"><i class="fa-solid fa-pen"></i></button>
+                        <button onclick="deleteMenuItem(${item.id})" class="p-2 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-xs transition-all" title="Hapus"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function openAddMenuModal() {
+            document.getElementById('modal-menu-title').innerText = 'Tambah Menu Baru';
+            document.getElementById('edit-menu-id').value = '';
+            document.getElementById('input-menu-name').value = '';
+            document.getElementById('input-menu-price').value = '';
+            document.getElementById('input-menu-image').value = '';
+            document.getElementById('modal-menu').classList.remove('hidden');
+        }
+
+        function openEditMenuModal(id) {
+            const item = menuItems.find(m => m.id === id);
+            if (!item) return;
+            document.getElementById('modal-menu-title').innerText = 'Edit Menu Makanan';
+            document.getElementById('edit-menu-id').value = item.id;
+            document.getElementById('input-menu-name').value = item.name;
+            document.getElementById('input-menu-category').value = item.category;
+            document.getElementById('input-menu-price').value = item.price;
+            document.getElementById('input-menu-image').value = item.image;
+            document.getElementById('modal-menu').classList.remove('hidden');
+        }
+
+        function closeModalMenu() {
+            document.getElementById('modal-menu').classList.add('hidden');
+        }
+
+        function saveMenuData() {
+            const id = document.getElementById('edit-menu-id').value;
+            const name = document.getElementById('input-menu-name').value;
+            const category = document.getElementById('input-menu-category').value;
+            const price = parseInt(document.getElementById('input-menu-price').value);
+            const image = document.getElementById('input-menu-image').value || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=300&h=200&fit=crop';
+
+            if (!name || !price) {
+                showToast('Nama dan harga menu harus diisi!', 'error');
+                return;
+            }
+
+            if (id) {
+                // Edit
+                const item = menuItems.find(m => m.id == id);
+                if (item) {
+                    item.name = name;
+                    item.category = category;
+                    item.price = price;
+                    item.image = image;
+                }
+                showToast('Menu berhasil diperbarui', 'success');
+            } else {
+                // Add new
+                const newId = menuItems.length > 0 ? Math.max(...menuItems.map(m => m.id)) + 1 : 1;
+                menuItems.push({ id: newId, name, category, price, image, status: 'Tersedia' });
+                showToast('Menu baru berhasil ditambahkan', 'success');
+            }
+
+            closeModalMenu();
+            renderMenuTable();
+            renderPosCatalog();
+        }
+
+        function deleteMenuItem(id) {
+            menuItems = menuItems.filter(m => m.id !== id);
+            renderMenuTable();
+            renderPosCatalog();
+            showToast('Menu berhasil dihapus', 'info');
+        }
+
+        // --- TOAST NOTIFICATION SYSTEM ---
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const bgColors = {
+                success: 'bg-slate-900 text-white border-emerald-500',
+                error: 'bg-red-900 text-white border-red-500',
+                info: 'bg-slate-800 text-white border-blue-500'
+            };
+
+            const icons = {
+                success: '<i class="fa-solid fa-circle-check text-emerald-400"></i>',
+                error: '<i class="fa-solid fa-circle-xmark text-red-400"></i>',
+                info: '<i class="fa-solid fa-circle-info text-blue-400"></i>'
+            };
+
+            toast.className = `flex items-center space-x-3 px-4 py-3 rounded-xl shadow-xl border-l-4 text-xs font-semibold transition-all transform translate-y-2 opacity-0 ${bgColors[type] || bgColors.success}`;
+            toast.innerHTML = `${icons[type] || icons.success} <span>${message}</span>`;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-2', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // --- INIT LOAD ---
+        window.onload = function() {
+            renderPosCatalog();
+            renderQueueBoard();
+            updateQueueBadge();
+        }
+    </script>
+</body>
+</html>
